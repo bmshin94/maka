@@ -18,12 +18,13 @@
  */
 
 import { useState } from 'react';
-import type { QuoteRef } from '@maka/core/events';
+import { QUOTE_COMMENT_MAX_LENGTH, type QuoteRef } from '@maka/core/events';
 import {
   appendPending,
   clearPending,
   removePending,
   selectPending,
+  updatePending,
   type PendingByKey,
 } from './pending-items.js';
 
@@ -42,16 +43,36 @@ export function useAppShellComposerQuotes(options: { draftKey: string }) {
   const [pendingByKey, setPendingByKey] = useState<PendingByKey<QuoteRef>>({});
   const pendingQuotes = selectPending(pendingByKey, options.draftKey);
 
-  function addQuote(input: { text: string; turnId?: string; label?: string }): void {
+  function addQuote(input: {
+    text: string;
+    turnId?: string;
+    label?: string;
+    comment?: string;
+  }): void {
     const text = input.text.slice(0, MAX_QUOTE_CHARS).trim();
     if (!text) return;
+    const comment = input.comment?.slice(0, QUOTE_COMMENT_MAX_LENGTH).trim();
     const ownerKey = options.draftKey;
     const quote: QuoteRef = {
       text,
       ...(input.label ? { label: input.label } : {}),
+      ...(comment ? { comment } : {}),
       ...(input.turnId ? { sourceTurnId: input.turnId } : {}),
     };
     setPendingByKey((map) => appendPending(map, ownerKey, [quote]));
+  }
+
+  function updateQuoteComment(index: number, comment: string): void {
+    const next = comment.slice(0, QUOTE_COMMENT_MAX_LENGTH).trim();
+    const ownerKey = options.draftKey;
+    setPendingByKey((map) =>
+      updatePending(map, ownerKey, index, (quote) => {
+        // An emptied note removes the field rather than keeping the old one:
+        // the excerpt is still staged, it simply carries nothing now.
+        const { comment: _previous, ...rest } = quote;
+        return next ? { ...rest, comment: next } : rest;
+      }),
+    );
   }
 
   function removeQuote(index: number): void {
@@ -82,6 +103,7 @@ export function useAppShellComposerQuotes(options: { draftKey: string }) {
   return {
     pendingQuotes,
     addQuote,
+    updateQuoteComment,
     removeQuote,
     clearQuotes,
     clearAllQuotes,

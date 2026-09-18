@@ -57,6 +57,7 @@ export {
   selectPending,
   appendPending,
   removePending,
+  updatePending,
   removePendingItems,
   clearPending,
 } from '@maka/ui/pending-items';

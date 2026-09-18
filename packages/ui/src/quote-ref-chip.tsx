@@ -20,7 +20,8 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { Button } from '@astryxdesign/core/Button';
 import { IconButton } from '@astryxdesign/core/IconButton';
-import { TextQuote, X } from './icons.js';
+import { Tooltip } from '@astryxdesign/core/Tooltip';
+import { MessageSquare, TextQuote, X } from './icons.js';
 import { cn } from './utils.js';
 import type { QuoteRef } from '@maka/core/events';
 import { useUiLocale } from './locale-context.js';
@@ -29,6 +30,31 @@ import { getConversationCopy } from './conversation-copy.js';
 /** Display-only: strip a leading ATX heading marker (`### Title`) from chip text. */
 export function stripQuoteHeadingMarkers(text: string): string {
   return text.replace(/^#{1,6}[ \t]+/, '');
+}
+
+/**
+ * The structured read of a quote: what was selected, then what the user said
+ * about it. Shared by the staged token in the composer and the chip on a sent
+ * message so neither surface can drift from the other.
+ */
+export function QuoteTooltipContent(props: { quote: QuoteRef }) {
+  const copy = getConversationCopy(useUiLocale()).messages;
+  return (
+    <div className="maka-quote-tooltip">
+      <div className="maka-quote-tooltip-row">
+        <span className="maka-quote-tooltip-label">{copy.quoteSelectedTextLabel}</span>
+        <span className="maka-quote-tooltip-value">
+          {stripQuoteHeadingMarkers(props.quote.text)}
+        </span>
+      </div>
+      {props.quote.comment ? (
+        <div className="maka-quote-tooltip-row">
+          <span className="maka-quote-tooltip-label">{copy.quoteCommentLabel}</span>
+          <span className="maka-quote-tooltip-value">{props.quote.comment}</span>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 /** Inline quote chip for the composer (removable) and sent user messages (read-only). */
@@ -54,11 +80,13 @@ export function QuoteRefChip(props: {
   }, [expanded, displayText, label]);
 
   const canExpand = clipped || expanded;
+  // A collapsed chip shows one line of its excerpt, so naming the control after
+  // that line keeps two quotes in one message from reading as the same button.
   const a11yLabel = canExpand
-    ? (expanded ? copy.quoteCollapseAriaLabel : copy.quoteExpandAriaLabel)
+    ? `${expanded ? copy.quoteCollapseAriaLabel : copy.quoteExpandAriaLabel}：${full}`
     : full;
 
-  return (
+  const chip = (
     <span
       className={cn(
         'maka-quote-chip',
@@ -66,12 +94,16 @@ export function QuoteRefChip(props: {
         props.onRemove ? 'maka-quote-chip-removable' : 'maka-quote-chip-readonly',
         props.className,
       )}
-      title={expanded ? undefined : full}
     >
       <TextQuote
         className={cn('maka-quote-chip-icon', expanded && 'maka-quote-chip-icon-expanded')}
         aria-hidden="true"
       />
+      {/* Marks that the excerpt carries a note. The note itself lives in the
+          tooltip and the model-facing content, not in the chip's own line. */}
+      {props.quote.comment ? (
+        <MessageSquare className="maka-quote-chip-comment-icon" aria-hidden="true" />
+      ) : null}
       <Button
         type="button"
         variant="ghost"
@@ -108,5 +140,14 @@ export function QuoteRefChip(props: {
         />
       ) : null}
     </span>
+  );
+
+  // An expanded chip already shows the excerpt in full; a tooltip over it
+  // would only repeat what is on screen.
+  if (expanded) return chip;
+  return (
+    <Tooltip content={<QuoteTooltipContent quote={props.quote} />} focusTrigger="always">
+      {chip}
+    </Tooltip>
   );
 }

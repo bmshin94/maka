@@ -401,6 +401,7 @@ function AppShellContent({
   const {
     pendingQuotes,
     addQuote,
+    updateQuoteComment,
     removeQuote,
     clearQuotes,
     restoreQuotes,
@@ -2489,6 +2490,9 @@ function AppShellContent({
                   allowAttachmentOnlySend={canStageComposerContext}
                   onRemoveAttachment={removeAttachment}                  pendingQuotes={pendingQuotes}
                   onRemoveQuote={removeQuote}
+                  onEditQuoteComment={
+                    canStageComposerContext ? updateQuoteComment : undefined
+                  }
                   onPasteAsQuote={canStageComposerContext ? addQuote : undefined}
                   onPickAttachments={contextPickEnabled ? pickAttachments : undefined}
                   onAttachFilePaths={contextPickEnabled ? attachFilePaths : undefined}
