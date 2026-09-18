@@ -101,7 +101,10 @@ export const RUNTIME_HOST_REGISTRATION_SCHEMA_VERSION = 1 as const;
 export const RUNTIME_HOST_PROTOCOL_VERSION = 0 as const;
 // Increment when the same protocol version no longer guarantees safe Client-Host
 // interoperability. Mismatches are rejected before domain commands are admitted.
-export const RUNTIME_HOST_COMPATIBILITY_EPOCH = 162 as const;
+export const RUNTIME_HOST_COMPATIBILITY_EPOCH = 163 as const;
+// 163: Message quotes carry an optional annotation written by the user, which
+// the model reads beside the excerpt. A Host on an older epoch rejects the
+// frame, so a Client may not send a note it would not survive.
 // 162: Runtime Resource control and stop replies drop the unused resource
 // snapshot; start replies allow compact state. Older peers require snapshots.
 // 161: Session transcript reads return the whole transcript under a byte budget,
