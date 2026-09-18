@@ -259,6 +259,7 @@ export function normalizeMessageContent(content: MessageContent): MessageContent
           quotes: content.quotes.map((quote) => ({
             text: quote.text,
             ...(quote.label !== undefined ? { label: quote.label } : {}),
+            ...(quote.comment !== undefined ? { comment: quote.comment } : {}),
             ...(quote.sourceTurnId !== undefined ? { sourceTurnId: quote.sourceTurnId } : {}),
           })),
         }
@@ -369,6 +370,7 @@ export function isQuoteRef(value: unknown): value is QuoteRef {
     hasExactShape(value, QUOTE_REF_SHAPE) &&
     typeof value.text === 'string' &&
     (value.label === undefined || typeof value.label === 'string') &&
+    (value.comment === undefined || typeof value.comment === 'string') &&
     (value.sourceTurnId === undefined || typeof value.sourceTurnId === 'string')
   );
 }
@@ -531,6 +533,7 @@ function quoteRefsEqual(left: QuoteRef, right: QuoteRef): boolean {
   return (
     left.text === right.text &&
     left.label === right.label &&
+    left.comment === right.comment &&
     left.sourceTurnId === right.sourceTurnId
   );
 }
