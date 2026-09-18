@@ -1206,11 +1206,24 @@ function formatAttachmentRefs(attachments: readonly AttachmentRef[]): string {
     .join('\n');
 }
 
+/**
+ * One escaping rule for every attribute on a projected tag. A quote inside a
+ * double-quoted attribute would end the value early, and a newline would put
+ * the opening tag's boundary where a reader expects prose, so both are folded.
+ */
+function attributeValue(value: string): string {
+  return value.replace(/"/g, "'").replace(/\s+/g, ' ');
+}
+
 function formatQuoteRefs(quotes: readonly QuoteRef[]): string {
   return quotes
     .map((q) => {
-      const label = q.label === undefined ? '' : ` label="${q.label.replace(/"/g, "'")}"`;
-      return `<quoted_excerpt${label}>\n${q.text}\n</quoted_excerpt>`;
+      const attributes = [
+        q.label === undefined ? null : `label="${attributeValue(q.label)}"`,
+        q.comment === undefined ? null : `comment="${attributeValue(q.comment)}"`,
+      ].filter((attribute): attribute is string => attribute !== null);
+      const open = attributes.length > 0 ? ` ${attributes.join(' ')}` : '';
+      return `<quoted_excerpt${open}>\n${q.text}\n</quoted_excerpt>`;
     })
     .join('\n');
 }
